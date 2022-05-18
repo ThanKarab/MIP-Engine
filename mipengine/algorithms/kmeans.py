@@ -30,9 +30,8 @@ def run(algo_interface):
 
     X_relation = algo_interface.initial_view_tables["x"]
 
-    k = algo_interface.algorithm_parameters["k"]
+    n_clusters = algo_interface.algorithm_parameters["k"]
     tol = algo_interface.algorithm_parameters["tol"]
-
     maxiter = algo_interface.algorithm_parameters["maxiter"]
 
     X = local_run(
@@ -45,14 +44,38 @@ def run(algo_interface):
         positional_args=[X],
     )
 
+    centers_local = local_run(
+        func=init_centers_local,
+        positional_args=[X_not_null],
+        share_to_global=[True]
+    )
+
     global_state,global_result = global_run(
-        func=init_centers,
+        func=init_centers_global,
         positional_args=[local_result],
         share_to_locals=[False,True]
     )
 
     curr_iter =0
     while True:
+        label_state = local_run(
+            func=compute_cluster_labels,
+            positional_args=[X_not_null,global_result],
+            share_to_global=[False]
+        )
+
+        metrics_local = local_run(
+            func=compute_metrics,
+            positional_args=[X_not_null,labels_state,n_clusters],
+            share_to_global=[True]
+        )
+
+        new_centers = local_run(
+            func=compute_centers_from_metrics,
+            positional_args=[metrics_local,n_clusters],
+            share_to_locals=[True]
+        )
+
         curr_iter+=1
         if (curr_iter > maxiter) or (diff<tol):
             break
@@ -67,9 +90,11 @@ def remove_nulls(a):
     a_sel = a[~numpy.isnan(a).any(axis=1)]
     return a_sel
 
-@udf(return_type=[transfer()])
-def init_centers():
+
+@udf(X= tensor(T, 2),n_clusters=scalar(int),return_type=[transfer()])
+def init_centers_local(X,n_clusters):
    seed = 123
+   n_samples = X.shape[1]
    random_state = check_random_state(seed)
    seeds = random_state.permutation(n_samples)[:n_clusters]
    centers = X[seeds]
@@ -77,8 +102,22 @@ def init_centers():
    transfer_ = {'centers':centers.tolist()}
    return transfer_
 
+@udf(centers_transfer=merge_transfer(),n_clusters=scalar(int),return_type=[state(),transfer()])
+def init_centers_global(centers_transfer):
+   centers_all = []
+   for curr_transfer in centers_transfer:
+       centers_all.append(curr_transfer['centers'])
+    centers_merged = numpy.vstack(centers_all)
+    centers_global = centers_merged[:n_clusters]
+
+    transfer_ = {'centers':centers_global.tolist()}
+    state_ = {'centers':centers_global.tolist()}
+    return state_,transfer_
+
+
+
 @udf(X=tensor(dtype=T, ndims=2), global_transfer=transfer(), return_type=state())
-def compute_cluster_labels()(X,global_transfer):
+def compute_cluster_labels(X,global_transfer):
     centers = numpy.array(global_transfer['centers'])
     distances = euclidean_distances(X,centers)
 
@@ -101,7 +140,7 @@ def compute_metrics(X,labels_state,n_clusters):
     return metrics
 
 @udf(X=tensor(transfers =merge_transfer(),n_clusters = scalar(int), return_type=transfer())
-def compute_centers_from_metrics(transfers):
+def compute_centers_from_metrics(transfers,n_clusters):
     centers = []
     n_dim = numpy.array(transfers[0][0]['X_sum']).shape[1]
     for i in range(n_clusters):
