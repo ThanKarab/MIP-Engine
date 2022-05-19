@@ -116,7 +116,7 @@ def remove_nulls(a):
     return a_sel
 
 
-@udf(X= tensor(T, 2),n_clusters=relation([("n_clusters",int)]),return_type=[transfer()])
+@udf(X= tensor(T, 2),n_clusters=tensor(int, 1),return_type=[transfer()])
 def init_centers_local(X,n_clusters):
    seed = 123
    n_samples = X.shape[1]
@@ -127,7 +127,7 @@ def init_centers_local(X,n_clusters):
    transfer_ = {'centers':centers.tolist()}
    return transfer_
 
-@udf(centers_transfer=merge_transfer(),n_clusters=scalar(int),return_type=[state(),transfer()])
+@udf(centers_transfer=merge_transfer(),n_clusters=tensor(int, 1),return_type=[state(),transfer()])
 def init_centers_global(centers_transfer,n_clusters):
    centers_all = []
    for curr_transfer in centers_transfer:
@@ -152,8 +152,8 @@ def compute_cluster_labels(X,global_transfer):
 
     return return_labels
 
-@udf(X=tensor(dtype=T, ndims=2), label_state=state(),n_clusters = scalar(int), return_type=transfer())
-def compute_metrics(X,labels_state,n_clusters):
+@udf(X=tensor(dtype=T, ndims=2), label_state=state(),n_clusters=tensor(int, 1), return_type=transfer())
+def compute_metrics(X,label_state,n_clusters):
     labels = numpy.array(label_state)
     metrics = {}
     for i in range(n_clusters):
@@ -164,7 +164,7 @@ def compute_metrics(X,labels_state,n_clusters):
         metrics[i] = {'X_sum': X_sum.tolist(),'X_count':X_count}
     return metrics
 
-@udf(X=tensor(transfers =merge_transfer(),n_clusters = scalar(int), return_type=transfer()))
+@udf(transfers =merge_transfer(),n_clusters =tensor(int, 1), return_type=transfer())
 def compute_centers_from_metrics(transfers,n_clusters):
     centers = []
     n_dim = numpy.array(transfers[0][0]['X_sum']).shape[1]
@@ -178,5 +178,6 @@ def compute_centers_from_metrics(transfers,n_clusters):
             curr_count += X_count
         final_i = np.divide(curr_sum, curr_count, out=np.zeros_like(curr_sum), where=curr_count!=0)
         centers.append(final_i)
-    centers = numpy.array(centers)
-    return centers.to_list()
+    centers_array = numpy.array(centers)
+    ret_val = centers_array.to_list()
+    return ret_val
