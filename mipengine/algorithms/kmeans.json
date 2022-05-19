@@ -19,39 +19,39 @@
 
 	},
 	"parameters": {
-    "k": {
-        "label": "k",
-        "desc": "k",
-        "type": "int",
-        "default": 4,
-        "min": 0,
-        "max": 128,
-        "notblank": true,
-        "multiple": false
+		"k": {
+			"label": "k",
+			"desc": "k",
+			"type": "int",
+			"default": 4,
+			"min": 0,
+			"max": 128,
+			"notblank": true,
+			"multiple": false
 
-  },
-  "tol": {
-      "label": "tol",
-      "desc": "tol",
-      "type": "real",
-      "default": 0.0001,
-      "min": 0.0,
-      "max": 1.0,
-      "notblank": true,
-      "multiple": false
+		},
+		"tol": {
+			"label": "tol",
+			"desc": "tol",
+			"type": "real",
+			"default": 0.0001,
+			"min": 0.0,
+			"max": 1.0,
+			"notblank": true,
+			"multiple": false
 
-},
-"maxiter": {
-    "label": "k",
-    "desc": "k",
-    "type": "int",
-    "default": 2,
-    "min": 0,
-    "max": 100,
-    "notblank": true,
-    "multiple": false
+		},
+		"maxiter": {
+			"label": "k",
+			"desc": "k",
+			"type": "int",
+			"default": 2,
+			"min": 0,
+			"max": 100,
+			"notblank": true,
+			"multiple": false
 
-},
+		}
 
 	},
 	"flags": {

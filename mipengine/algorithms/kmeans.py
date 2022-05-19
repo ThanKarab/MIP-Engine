@@ -9,7 +9,7 @@ from mipengine.table_data_DTOs import ColumnDataStr
 from mipengine.udfgen import TensorBinaryOp
 from mipengine.udfgen import TensorUnaryOp
 from mipengine.udfgen import literal
-from mipengine.udfgen import scalar
+#from mipengine.udfgen import scalar
 from mipengine.udfgen import merge_tensor
 from mipengine.udfgen import relation
 from mipengine.udfgen import tensor
@@ -38,7 +38,7 @@ def run(algo_interface):
 
     X_relation = algo_interface.initial_view_tables["x"]
 
-    n_clusters = int(algo_interface.algorithm_parameters["k"])
+    n_clusters = algo_interface.algorithm_parameters["k"]
     tol = algo_interface.algorithm_parameters["tol"]
     maxiter = algo_interface.algorithm_parameters["maxiter"]
 
@@ -116,7 +116,7 @@ def remove_nulls(a):
     return a_sel
 
 
-@udf(X= tensor(T, 2),n_clusters=tensor(int, 1),return_type=[transfer()])
+@udf(X= tensor(T, 2),n_clusters=literal(),return_type=[transfer()])
 def init_centers_local(X,n_clusters):
    seed = 123
    n_samples = X.shape[1]
@@ -127,7 +127,7 @@ def init_centers_local(X,n_clusters):
    transfer_ = {'centers':centers.tolist()}
    return transfer_
 
-@udf(centers_transfer=merge_transfer(),n_clusters=tensor(int, 1),return_type=[state(),transfer()])
+@udf(centers_transfer=merge_transfer(),n_clusters=literal(),return_type=[state(),transfer()])
 def init_centers_global(centers_transfer,n_clusters):
    centers_all = []
    for curr_transfer in centers_transfer:
@@ -152,7 +152,7 @@ def compute_cluster_labels(X,global_transfer):
 
     return return_labels
 
-@udf(X=tensor(dtype=T, ndims=2), label_state=state(),n_clusters=tensor(int, 1), return_type=transfer())
+@udf(X=tensor(dtype=T, ndims=2), label_state=state(),n_clusters=literal(), return_type=transfer())
 def compute_metrics(X,label_state,n_clusters):
     labels = numpy.array(label_state)
     metrics = {}
