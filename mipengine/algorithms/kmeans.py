@@ -19,11 +19,11 @@ from mipengine.udfgen import transfer
 from mipengine.udfgen import merge_transfer
 from mipengine.udfgen import state
 
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.utils import check_random_state
 
 from pydantic import BaseModel
 from typing import List
+
+import json
 
 T = TypeVar('T')
 S = TypeVar("S")
@@ -60,7 +60,7 @@ def run(algo_interface):
 
     global_state,global_result = global_run(
         func=init_centers_global,
-        positional_args=[local_result,n_clusters],
+        positional_args=[centers_local,n_clusters],
         share_to_locals=[False,True]
     )
 
@@ -75,7 +75,7 @@ def run(algo_interface):
 
         metrics_local = local_run(
             func=compute_metrics,
-            positional_args=[X_not_null,labels_state,n_clusters],
+            positional_args=[X_not_null,label_state,n_clusters],
             share_to_global=[True]
         )
 
@@ -118,6 +118,7 @@ def remove_nulls(a):
 
 @udf(X= tensor(T, 2),n_clusters=literal(),return_type=[transfer()])
 def init_centers_local(X,n_clusters):
+   from sklearn.utils import check_random_state
    seed = 123
    n_samples = X.shape[1]
    random_state = check_random_state(seed)
@@ -143,6 +144,7 @@ def init_centers_global(centers_transfer,n_clusters):
 
 @udf(X=tensor(dtype=T, ndims=2), global_transfer=transfer(), return_type=state())
 def compute_cluster_labels(X,global_transfer):
+    from sklearn.metrics.pairwise import euclidean_distances
     centers = numpy.array(global_transfer['centers'])
     distances = euclidean_distances(X,centers)
 
@@ -154,30 +156,38 @@ def compute_cluster_labels(X,global_transfer):
 
 @udf(X=tensor(dtype=T, ndims=2), label_state=state(),n_clusters=literal(), return_type=transfer())
 def compute_metrics(X,label_state,n_clusters):
-    labels = numpy.array(label_state)
+    labels = numpy.array(label_state['labels'])
     metrics = {}
     for i in range(n_clusters):
-        relevant_features = np.where(labels == i)
-        X_clust = X[labels == relevant_features,:]
+        relevant_features = numpy.where(labels == i)
+        X_clust = X[relevant_features,:]
+        X_clust = X_clust[0,:,:]
         X_sum = numpy.sum(X_clust, axis=0)
         X_count = X_clust.shape[0]
+        #raise ValueError(str(relevant_features)+''+str(labels.shape)+' '+str(X.shape)+' '+str(X_sum.shape)+' '+str(X_clust.shape))
         metrics[i] = {'X_sum': X_sum.tolist(),'X_count':X_count}
     return metrics
 
-@udf(transfers =merge_transfer(),n_clusters =tensor(int, 1), return_type=transfer())
+@udf(transfers =merge_transfer(),n_clusters =literal(), return_type=transfer())
 def compute_centers_from_metrics(transfers,n_clusters):
     centers = []
-    n_dim = numpy.array(transfers[0][0]['X_sum']).shape[1]
+    #raise ValueError(transfers)
+    n_dim = numpy.array(transfers[0][str(0)]['X_sum']).shape[0]
     for i in range(n_clusters):
-        curr_sum = numpy.zeros(1,n_dim)
-        curr_count = numpy.zeros(1,n_dim)
+        curr_sum = numpy.zeros((1,n_dim))
+        curr_count = 0
         for curr_transfer in transfers:
-            X_sum = numpy.array(curr_transfer[i]['X_sum'])
-            X_count = numpy.array(curr_transfer[i]['X_count'])
+            X_sum = numpy.array(curr_transfer[str(i)]['X_sum'])
+            X_count = curr_transfer[str(i)]['X_count']
             curr_sum += X_sum
             curr_count += X_count
-        final_i = np.divide(curr_sum, curr_count, out=np.zeros_like(curr_sum), where=curr_count!=0)
+        if curr_count !=0:
+            final_i = curr_sum/curr_count
+        else:
+            final_i = curr_sum
         centers.append(final_i)
-    centers_array = numpy.array(centers)
-    ret_val = centers_array.to_list()
-    return ret_val
+    centers_array = numpy.vstack(centers)
+    #raise ValueError(centers_array.shape)
+    ret_val = centers_array.tolist()
+    ret_val2 = {'centers':ret_val}
+    return ret_val2

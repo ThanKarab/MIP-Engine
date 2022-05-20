@@ -53,7 +53,7 @@ def do_post_request():
 
     algorithm_request = AlgorithmRequestDTO(
         inputdata=algorithm_input_data,
-        #parameters={"classes": classes},
+        parameters={"k": 4,'maxiter':2,'tol':0.0001},
     )
 
     debug(algorithm_request)
