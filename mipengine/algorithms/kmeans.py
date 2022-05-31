@@ -69,7 +69,7 @@ def run(algo_interface):
     centers_to_compute = global_result
 
     init_centers = json.loads(centers_to_compute.get_table_data()[1][0])["centers"]
-    init_centers_array = numpy.array(old_centers)
+    init_centers_array = numpy.array(init_centers)
     init_centers_list = init_centers_array.tolist()
     while True:
         label_state = local_run(
@@ -103,7 +103,7 @@ def run(algo_interface):
         if (curr_iter > maxiter) or (diff<tol):
             ret_obj = KmeansResult(
                 title="K-Means Centers",
-                centers=new_centers_array.tolist()
+                centers=new_centers_array.tolist(),
                 init_centers = init_centers_list
             )
             return ret_obj
