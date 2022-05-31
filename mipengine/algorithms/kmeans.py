@@ -31,6 +31,7 @@ S = TypeVar("S")
 class KmeansResult(BaseModel):
     title: str
     centers: List[List[float]]
+    init_centers: List[List[float]]
 
 def run(algo_interface):
     local_run = algo_interface.run_udf_on_local_nodes
@@ -66,6 +67,10 @@ def run(algo_interface):
 
     curr_iter =0
     centers_to_compute = global_result
+
+    init_centers = json.loads(centers_to_compute.get_table_data()[1][0])["centers"]
+    init_centers_array = numpy.array(old_centers)
+    init_centers_list = init_centers_array.tolist()
     while True:
         label_state = local_run(
             func=compute_cluster_labels,
@@ -99,6 +104,7 @@ def run(algo_interface):
             ret_obj = KmeansResult(
                 title="K-Means Centers",
                 centers=new_centers_array.tolist()
+                init_centers = init_centers_list
             )
             return ret_obj
 
