@@ -37,21 +37,25 @@ def run(algo_interface):
     local_run = algo_interface.run_udf_on_local_nodes
     global_run = algo_interface.run_udf_on_global_node
 
-    X_relation = algo_interface.initial_view_tables["x"]
+    #X_relation = algo_interface.initial_view_tables["x"]
+
+    X_relation, *_ = algo_interface.create_primary_data_views(
+        variable_groups=[algo_interface.x_variables],dropna=True
+    )
 
     n_clusters = algo_interface.algorithm_parameters["k"]
     tol = algo_interface.algorithm_parameters["tol"]
     maxiter = algo_interface.algorithm_parameters["maxiter"]
 
-    X = local_run(
+    X_not_null = local_run(
         func=relation_to_matrix,
         positional_args=[X_relation],
     )
 
-    X_not_null = local_run(
-        func=remove_nulls,
-        positional_args=[X],
-    )
+    #X_not_null = local_run(
+    #    func=remove_nulls,
+    #    positional_args=[X],
+    #)
 
     centers_local = local_run(
         func=init_centers_local,
