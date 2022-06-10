@@ -11,7 +11,7 @@ from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from kombu.exceptions import OperationalError
 
-from mipengine.controller.celery_app import get_node_celery_app
+from mipengine.controller.celery_apps import get_node_celery_app
 from mipengine.controller.node_tasks_handler_interface import INodeTasksHandler
 from mipengine.controller.node_tasks_handler_interface import IQueuedUDFAsyncResult
 from mipengine.controller.node_tasks_handler_interface import UDFKeyArguments

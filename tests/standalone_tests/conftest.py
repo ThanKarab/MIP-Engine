@@ -13,7 +13,7 @@ import sqlalchemy as sql
 import toml
 
 from mipengine import AttrDict
-from mipengine.controller.celery_app import get_node_celery_app
+from mipengine.controller.celery_apps import get_node_celery_app
 from mipengine.controller.controller_logger import get_request_logger
 from mipengine.controller.data_model_registry import DataModelRegistry
 from mipengine.controller.node_landscape_aggregator import NodeLandscapeAggregator

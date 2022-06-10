@@ -10,10 +10,10 @@ from mipengine.controller import controller_logger as ctrl_logger
 
 # TODO remove import get_node_celery_app, pass the celery app  (inverse dependency)
 # so the module can be easily unit tested
-from mipengine.controller.celery_app import get_node_celery_app
+from mipengine.controller.celery_apps import get_node_celery_app
 from mipengine.controller.data_model_registry import DataModelRegistry
+from mipengine.controller.node_addresses import get_nodes_addresses
 from mipengine.controller.node_registry import NodeRegistry
-from mipengine.controller.nodes_addresses import get_nodes_addresses
 from mipengine.node_info_DTOs import NodeInfo
 from mipengine.node_info_DTOs import NodeRole
 from mipengine.node_tasks_DTOs import CommonDataElement

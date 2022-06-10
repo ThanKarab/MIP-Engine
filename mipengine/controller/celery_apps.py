@@ -3,7 +3,7 @@ from celery import Celery
 from mipengine.controller import config as controller_config
 
 
-def get_node_celery_app(socket_addr):
+def get_node_celery_apps():
     user = controller_config.rabbitmq.user
     password = controller_config.rabbitmq.password
     vhost = controller_config.rabbitmq.vhost
