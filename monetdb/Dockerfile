@@ -9,6 +9,7 @@ RUN tar -xf /home/MonetDB-11.43.15.tar.bz2 -C /home/
 #######################################################
 # Install monetdb
 #######################################################
+RUN pip3 install numpy
 RUN mkdir /home/monetdb-build
 WORKDIR /home/monetdb-build
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DASSERT=ON -DSTRICT=ON -DCMAKE_INSTALL_PREFIX=/usr/local/bin/monetdb /home/MonetDB-11.43.15
@@ -46,7 +47,6 @@ RUN chmod 444 /etc/logrotate.d/monetdb
 #######################################################
 # Install python libraries
 #######################################################
-RUN pip3 install numpy
 RUN pip3 install scipy
 RUN pip3 install pandas
 RUN pip3 install scikit-learn

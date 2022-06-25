@@ -1,6 +1,5 @@
 FROM ubuntu:20.04
 MAINTAINER Thanasis Karampatsis <tkarabatsis@athenarc.gr>
-LABEL version="1.4"
 
 ENV LANG=C.UTF-8
 
